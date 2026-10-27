@@ -111,3 +111,28 @@ describe("individual cross-channel approvals", () => {
   });
   it("never queues a contact-fatigue no-action fallback", () => { expect(pendingDecisions(POOL, {}).some(c => c.current_nba.product_id === "P-NONE-00")).toBe(false); });
 });
+describe("normalizeCustomer consistency rules", () => {
+  it("profiling-blocked customers get Sie fallback, no NLP and ΔCLV 0", () => {
+    for (const c of POOL.filter(isProfilingBlocked)) {
+      expect(c.current_nba.tone).toBe("Sie");
+      expect(c.tone_label).toBe("Sie (Standard-Fallback · kein NLP-Profiling)");
+      expect(c.current_nba.delta_clv_eur).toBe(0);
+    }
+  });
+  it("no-action customers have no channel and are blocked", () => {
+    const miriam = POOL.find(c => c.name === "Miriam Kunz")!;
+    expect(miriam.current_nba.channel).toBe("none");
+    expect(miriam.status).toBe("Gesperrt (Kontaktschutz)");
+  });
+  it("queue holds only customers needing approval", () => {
+    const names = pendingDecisions(POOL, {}).map(c => c.name);
+    for (const n of ["Laura Schmidt", "Miriam Kunz", "Jonas Berger"]) expect(names).not.toContain(n);
+    expect(pendingDecisions(POOL, {}).every(c => c.status === "Freigabe erforderlich")).toBe(true);
+  });
+  it("every sample has at least 2 profitable customers needing approval", () => {
+    for (let i = 0; i < 30; i++) {
+      const s = pickSample(POOL, 5);
+      expect(s.filter(c => c.status === "Freigabe erforderlich" && c.current_nba.delta_clv_eur > 0).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
