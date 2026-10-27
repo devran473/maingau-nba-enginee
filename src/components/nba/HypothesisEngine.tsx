@@ -1,45 +1,45 @@
 import { useState } from "react";
-import { BrainCircuit, ChevronDown, FlaskConical, CheckCircle2, Loader2 } from "lucide-react";
+import { BrainCircuit, ChevronDown, FlaskConical, CheckCircle2, RefreshCw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
 import { useNba } from "@/lib/nba-store";
-import { BANDIT_DEFAULT_EXPLORATION, explorationMetrics, HYPO_H104, type Hypothesis } from "@/lib/pitch";
+import { BANDIT_DEFAULT_EXPLORATION, explorationMetrics, type Hypothesis } from "@/lib/pitch";
 import { cn } from "@/lib/utils";
 
 function HypoCard({ h }: { h: Hypothesis }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="spatial-card p-4" aria-label={h.id}>
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="rounded bg-primary px-2 py-0.5 font-mono text-xs font-semibold text-primary-foreground">{h.id}</span>
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold min-h-8",
               h.confirmed ? "border-success/40 bg-success/10 text-success" : "border-accent/50 bg-accent/15 text-warning-foreground",
             )}
           >
-            {h.confirmed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Loader2 className="h-3.5 w-3.5" />}
+            {h.confirmed ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <RefreshCw className="h-3.5 w-3.5 shrink-0" />}
             {h.status}
           </span>
         </div>
       </div>
       <p className="mt-3 text-sm font-medium leading-snug">{h.title}</p>
-      <div className="mt-4 grid grid-cols-3 gap-3 border-t pt-3 text-center">
-        <div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3 text-center">
+        <div className="metric-well p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stichprobe</div>
           <div className="font-display text-lg font-bold">{h.sample}</div>
           <div className="text-[11px] text-muted-foreground">Kunden</div>
         </div>
-        <div>
+        <div className="metric-well p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Mehrertrag</div>
           <div className="font-display text-lg font-bold text-success">+{h.uplift.toLocaleString("de-DE", { minimumFractionDigits: 1 })}%</div>
           <div className="text-[11px] text-muted-foreground">ggü. Kontrollgruppe</div>
         </div>
-        <div>
+        <div className="metric-well p-4">
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signifikanz</div>
           <div className="font-display text-lg font-bold">{h.significance}%</div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-chart-2 transition-all duration-700" style={{ width: `${h.significance}%` }} />
+          <div className="liquid-track mt-2" role="progressbar" aria-label={`${h.id} Signifikanz`} aria-valuenow={h.significance} aria-valuemin={0} aria-valuemax={100}>
+            <div className="liquid-blue h-full" style={{ width: `${h.significance}%` }} />
           </div>
         </div>
       </div>
@@ -48,13 +48,13 @@ function HypoCard({ h }: { h: Hypothesis }) {
 }
 
 export function HypothesisEngine() {
-  const { model, exploration, setExploration } = useNba();
+  const { model, hypotheses, exploration, setExploration } = useNba();
   const [open, setOpen] = useState(true);
   const metrics = explorationMetrics(exploration, model.clv);
   const exploitation = 100 - exploration;
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-xl border bg-card shadow-card">
+    <Collapsible open={open} onOpenChange={setOpen} className="spatial-card">
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left">
         <span className="flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-accent" />
@@ -68,11 +68,11 @@ export function HypothesisEngine() {
       <CollapsibleContent className="data-[state=closed]:animate-out data-[state=open]:animate-in fade-in-0 slide-in-from-top-1">
         <div className="space-y-4 px-5 pb-5">
           <div className="grid gap-4 lg:grid-cols-2">
-            <HypoCard h={HYPO_H104} />
-            <HypoCard h={model.h105} />
+            <HypoCard h={hypotheses.h104} />
+            <HypoCard h={hypotheses.h105} />
           </div>
 
-          <div className="rounded-lg border bg-secondary/50 p-4">
+          <div className="metric-well p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <FlaskConical className="h-4 w-4 text-accent" /> Bandit-Aufteilung · ε-Greedy
@@ -82,9 +82,9 @@ export function HypothesisEngine() {
               </div>
             </div>
 
-            <div className="mt-3 flex h-3 overflow-hidden rounded-full border">
-              <div className="bg-gradient-amber transition-all duration-500" style={{ width: `${exploitation}%` }} />
-              <div className="bg-chart-2 transition-all duration-500" style={{ width: `${exploration}%` }} />
+            <div className="liquid-track mt-3 flex">
+              <div className="liquid-gold h-full" style={{ width: `${exploitation}%` }} />
+              <div className="liquid-blue h-full" style={{ width: `${exploration}%` }} />
             </div>
             <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs">
               <span className="font-medium">

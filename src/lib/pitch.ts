@@ -132,6 +132,30 @@ export const HYPO_H105: Hypothesis = {
   confirmed: false,
 };
 
+/** Live demo estimates; retraining state remains separate from exploration projections. */
+export function explorationHypotheses(explorationPct: number) {
+  const h104Significance = Math.min(99, Math.round(78 + explorationPct * 0.7));
+  const h105Significance = Math.min(98, Math.round(64 + explorationPct * 1.1));
+  return {
+    h104: {
+      ...HYPO_H104,
+      sample: Math.round(55 + explorationPct * 2.5),
+      uplift: Number((14.2 + explorationPct * 0.16).toFixed(1)),
+      significance: h104Significance,
+      confirmed: h104Significance >= 90,
+      status: h104Significance >= 90 ? "Bestätigt & integriert" : "In Erprobung (Signifikanz zu niedrig)",
+    },
+    h105: {
+      ...HYPO_H105,
+      sample: Math.round(30 + explorationPct * 2.5),
+      uplift: Number((5.1 + explorationPct * 0.13).toFixed(1)),
+      significance: h105Significance,
+      confirmed: h105Significance >= 90,
+      status: h105Significance >= 90 ? "Validiert" : "In Erprobung (Exploration läuft)",
+    },
+  };
+}
+
 /* --------------------------------- model state --------------------------------- */
 
 export interface ModelState {
