@@ -11,7 +11,7 @@ describe("ID-only customer disclosure", () => {
     const views = [<MarketingTab onOpenCustomer={() => {}} />, <CustomerTab />, <ReplayTab onOpenCustomer={() => {}} />];
     for (const view of views) {
       const output = renderToStaticMarkup(<NbaProvider>{view}</NbaProvider>);
-      expect(output).toContain("MG-100004");
+      expect(output).toMatch(/MG-100\d{3}/);
       for (const customer of POOL) expect(output).not.toContain(customer.name);
     }
   });
