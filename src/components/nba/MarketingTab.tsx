@@ -74,7 +74,7 @@ export function MarketingTab({ onOpenCustomer }: { onOpenCustomer: (id: string) 
       <Seg label="Geschäftsbereich" value={line} options={["Alle", "Strom", "Gas", "Mobilfunk", "Internet", "Autostrom"]} onChange={setLine} />
       <Seg label="Aktionstyp" value={action} options={["Alle", "Vertrieb", "Bindung", "Nur Service"]} onChange={setAction} />
       <Seg label="Mahnung / Risiko" value={risk} options={["Alle", "Ohne Risiko", "Mahnung / Beschwerde"]} onChange={setRisk} />
-      <Seg label="Kanal" value={channel} options={["Alle", ...Object.values(channelMeta).map(c => c.label)]} onChange={setChannel} />
+      <Seg label="Kanal" value={channel} options={["Alle", ...Object.values(channelMeta).map(c => c.label).filter(l => l !== "—")]} onChange={setChannel} />
     </div>
     <section className="min-w-0">
       <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-semibold">Kampagnenmatrix</h3><span className="text-xs text-muted-foreground">{rows.length} von {customers.length} Kunden</span></div>
