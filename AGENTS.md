@@ -15,4 +15,6 @@
 - Demo data flows one way: `src/data/mockData.ts` (user-supplied shapes) -> `pitchPool.ts` -> `nba-store.tsx` -> tabs. Do not put pool profiles or KPI targets into `mockData.ts`.
 
 - Exploration calculations, NLP demo-score normalization and decision keys/summaries live in `src/lib/pitch.ts`; the shared store owns exploration and resolved decisions so tabs remain consistent.
+- Derive display hypotheses from exploration in `src/lib/pitch.ts` and expose them through the shared store, so every tab uses identical live metrics without overwriting retraining state.
+- Spatial surfaces, recessed wells, glossy tracks and physical gold controls use semantic CSS tokens and shared utilities, so depth styling stays consistent across tabs.
 - Preserve the supplied `mockData.ts`; localized pool overrides and channel assignments belong in `pitchPool.ts`. Delivery controls simulate gateway handoff until a real integration is configured; never claim actual delivery.
