@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { MapPin, CalendarDays, Users, UserCheck, Info, ShieldAlert, Sparkles, Check, X, ThumbsUp, Zap, Smartphone, Flame, Car, MessageSquareQuote, Dices } from "lucide-react";
+import { MapPin, CalendarDays, Users, UserCheck, Info, ShieldAlert, Sparkles, Check, X, ThumbsUp, Zap, Smartphone, Flame, Car, MessageSquareQuote } from "lucide-react";
 import { useNba } from "@/lib/nba-store";
 import { ActionBadge, ChannelBadge, churnTone, CustomerProfilingBadge, eur } from "./shared";
 import { profilingState } from "@/lib/pitch";
@@ -14,7 +14,7 @@ const lineIcon: Record<string, typeof Zap> = { Strom: Zap, Gas: Flame, Mobilfunk
 const contractName: Record<string, string> = { Strom: "StromKomfort", Gas: "GasKomfort", Mobilfunk: "Mobil S", Autostrom: "Autostrom Flex" };
 
 export function CustomerTab() {
-  const { customers, selectedId, setSelectedId, logFeedback, feedback, recentlyUpdated, sampleRandom, sampleIds } = useNba();
+  const { customers, selectedId, setSelectedId, logFeedback, feedback, recentlyUpdated, sampleIds } = useNba();
   const [dismissing, setDismissing] = useState(false);
   const [reason, setReason] = useState("");
   const c = customers.find((x) => x.customer_id === selectedId) ?? customers[0];
@@ -26,6 +26,7 @@ export function CustomerTab() {
   const serviceCost = c.has_open_complaint ? 184 : c.churn_drivers.some((d) => d.includes("Lad")) ? 96 : 32;
 
   const profiling = profilingState(c);
+  const profilingOk = profiling === "granted";
   const consents = [
     { k: "E-Mail-Marketing", ok: c.consents.marketing_email, v: c.consents.marketing_email ? "Erteilt" : "Widerrufen" },
     { k: "Portal-Personalisierung", ok: c.consents.portal_app, v: c.consents.portal_app ? "Erteilt" : "Widerrufen" },
@@ -38,16 +39,12 @@ export function CustomerTab() {
     toast.success(`${action} protokolliert`, { description: `${c.customer_id} · ${nba.product_name}` });
   };
 
-  const sample = () => {
-    const next = sampleRandom();
-    toast.success("5 zufällige Kunden ausgewählt", { description: next.map((x) => x.customer_id).join(" · ") });
-  };
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-8">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Kunde</span>
+          <span className="micro-label">Kunde</span>
           <Select value={c.customer_id} onValueChange={setSelectedId}>
             <SelectTrigger className="w-full bg-card sm:w-80"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -58,15 +55,12 @@ export function CustomerTab() {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" variant="secondary" onClick={sample}>
-            <Dices className="h-4 w-4" /> 5 zufällige Kunden auswählen
-          </Button>
           {sampleIds && (
             <span className="text-xs text-muted-foreground">Zufallsstichprobe aktiv · {sampleIds.length} Profile</span>
           )}
         </div>
 
-        <div className={cn("rounded-xl border bg-card p-6 shadow-card", recentlyUpdated === c.customer_id && "flash-update")}>
+        <div className={cn("bento", recentlyUpdated === c.customer_id && "flash-update")}>
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <div className="font-mono text-xs text-muted-foreground">{c.customer_id}</div>
@@ -89,19 +83,19 @@ export function CustomerTab() {
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">CLV</div>
-                <div className="font-display text-2xl font-bold">{eur(c.clv_eur)}</div>
+                <div className="micro-label">CLV</div>
+                <div className="kpi-value">{eur(c.clv_eur)}</div>
               </div>
               <div className="w-36">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Abwanderungsrisiko</div>
-                <div className={cn("font-display text-2xl font-bold", tone.text)}>{Math.round(c.churn_prob * 100)}%</div>
+                <div className="micro-label">Abwanderungsrisiko</div>
+                <div className={cn("kpi-value", tone.text)}>{Math.round(c.churn_prob * 100)}%</div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
                   <div className={cn("h-full transition-all duration-700", tone.bar)} style={{ width: `${Math.min(100, c.churn_prob * 200)}%` }} />
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Servicekosten 12 Monate</div>
-                <div className="font-display text-2xl font-bold">{eur(serviceCost)}</div>
+                <div className="micro-label">Servicekosten 12 Monate</div>
+                <div className="kpi-value">{eur(serviceCost)}</div>
               </div>
             </div>
           </div>
@@ -114,7 +108,7 @@ export function CustomerTab() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
-          <div className="rounded-xl border bg-card p-5 shadow-card">
+          <div className="bento">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-semibold"><UserCheck className="h-4 w-4 text-accent" />Einwilligungen & Steuerung</h3>
               <Tooltip>
@@ -135,7 +129,7 @@ export function CustomerTab() {
               ))}
             </div>
             <div className="mt-6">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Rückmeldungsprotokoll</div>
+              <div className="micro-label">Rückmeldungsprotokoll</div>
               <div className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
                 {feedback.filter((f) => f.customer_id === c.customer_id).map((f, i) => (
                   <div key={i} className="rounded bg-secondary px-2 py-1"><span className="font-mono text-muted-foreground">{f.at}</span> · {f.action}{f.note ? ` — ${f.note}` : ""}</div>
@@ -145,7 +139,7 @@ export function CustomerTab() {
             </div>
           </div>
 
-          <div className={cn("relative overflow-hidden rounded-xl bg-gradient-navy p-6 text-navy-foreground shadow-glow", recentlyUpdated === c.customer_id && "flash-update")}>
+          <div className={cn("obsidian", recentlyUpdated === c.customer_id && "flash-update")}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent">
                 <Sparkles className="h-4 w-4" /> Nächste beste Aktion
@@ -164,11 +158,11 @@ export function CustomerTab() {
               </div>
             </div>
             <div className="mt-5 inline-flex flex-wrap items-center gap-2 rounded-full border border-navy-muted/30 px-4 py-1.5 text-sm">
-              Kanal: <ChannelBadge channel={nba.channel} />
-              <span className="text-navy-muted">|</span> Tonalität: <b>{nba.tone}</b>
-              <span className="text-navy-muted">({nba.tone_confidence}% NLP-Konfidenz)</span>
+              Kanal: <ChannelBadge channel={nba.channel} onDark />
+              <span className="text-navy-muted">|</span> Tonalität: <b>{profilingOk ? nba.tone : "Sie"}</b>
+              <span className="text-navy-muted">{profilingOk ? `(${nba.tone_confidence}% NLP-Konfidenz)` : "(Standard-Fallback · kein NLP-Profiling)"}</span>
             </div>
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-navy-muted"><Info className="h-3.5 w-3.5 shrink-0" />Ermittelt via Text-Mining aus Ticket-Historie &amp; Kundenanrufen</p>
+            {profilingOk && <p className="mt-2 flex items-center gap-1.5 text-xs text-navy-muted"><Info className="h-3.5 w-3.5 shrink-0" />Ermittelt via Text-Mining aus Ticket-Historie &amp; Kundenanrufen</p>}
             {nba.blocked_by_hard_rule && (
               <div className="mt-4 flex items-start gap-2 rounded-lg bg-destructive/20 px-3 py-2 text-sm">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /> {nba.blocked_by_hard_rule}
@@ -179,7 +173,7 @@ export function CustomerTab() {
               <p className="mt-1 text-base font-semibold leading-snug">{nba.reason}</p>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
-              <Button className="bg-gradient-amber font-semibold text-accent-foreground hover:opacity-90" onClick={() => act("Annehmen & anbieten")}>
+              <Button variant="gold" disabled={nba.channel === "none"} onClick={() => act("Annehmen & anbieten")}>
                 <Check className="h-4 w-4" /> Annehmen & anbieten
               </Button>
               <Button variant="secondary" onClick={() => setDismissing((v) => !v)}>

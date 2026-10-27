@@ -2,8 +2,8 @@ import { Fragment, useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Euro, Users, PieChart, ShieldCheck, ShieldAlert, Send, Layers, ExternalLink, TrendingUp, X } from "lucide-react";
 import { useNba } from "@/lib/nba-store";
-import { decisionKey, explorationMetrics, pendingDecisions, selectionSummary } from "@/lib/pitch";
-import { ActionBadge, ChannelBadge, ComplianceBadge, CustomerProfilingBadge, eur, primarySegment, channelMeta } from "./shared";
+import { decisionKey, effectiveStatus, explorationMetrics, pendingDecisions, selectionSummary } from "@/lib/pitch";
+import { ActionBadge, ChannelBadge, ComplianceBadge, CustomerProfilingBadge, StatusBadge, eur, primarySegment, channelMeta } from "./shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +12,7 @@ import { RetrainSimulator } from "./RetrainSimulator";
 import { cn } from "@/lib/utils";
 
 function Seg({ value, options, onChange, label }: { value: string; options: string[]; onChange: (v: string) => void; label: string }) {
-  return <div className="flex flex-col gap-1.5"><span className="text-[11px] font-semibold uppercase text-muted-foreground">{label}</span><div className="flex flex-wrap gap-1 rounded-lg bg-secondary p-1">{options.map(o => <Button key={o} size="sm" variant={value === o ? "default" : "ghost"} onClick={() => onChange(o)} aria-pressed={value === o}>{o}</Button>)}</div></div>;
+  return <div className="flex flex-col gap-1.5"><span className="micro-label">{label}</span><div className="segmented">{options.map(o => <Button key={o} variant={value === o ? "segmentActive" : "segment"} onClick={() => onChange(o)} aria-pressed={value === o}>{o}</Button>)}</div></div>;
 }
 
 function AnimatedProfit({ value }: { value: number }) {
@@ -68,9 +68,9 @@ export function MarketingTab({ onOpenCustomer }: { onOpenCustomer: (id: string) 
     { label: "DSGVO-Compliance", value: "100%", icon: ShieldCheck, hint: "Konsequente Einwilligungsprüfung" },
   ];
   return <div className="space-y-6">
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{kpis.map(k => <div key={k.label} className="rounded-lg border bg-card p-5 shadow-card"><div className="flex items-start justify-between gap-2"><span className="min-h-12 text-xs font-semibold uppercase text-muted-foreground">{k.label}</span><k.icon className="h-4 w-4 shrink-0 text-accent" /></div><div className="mt-2 font-display text-2xl font-bold tabular-nums">{k.value}</div><div className="mt-2 text-xs text-muted-foreground">{k.hint}</div></div>)}</div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{kpis.map(k => <div key={k.label} className="bento"><div className="flex items-start justify-between gap-2"><span className="micro-label min-h-12">{k.label}</span><k.icon className="h-4 w-4 shrink-0 text-accent" /></div><div className="mt-2 kpi-value tabular-nums">{k.value}</div><div className="mt-2 text-xs text-muted-foreground">{k.hint}</div></div>)}</div>
     <HypothesisEngine /><RetrainSimulator />
-    <div className="flex flex-wrap gap-5 border-y py-4">
+    <div className="bento flex flex-wrap gap-5">
       <Seg label="Geschäftsbereich" value={line} options={["Alle", "Strom", "Gas", "Mobilfunk", "Internet", "Autostrom"]} onChange={setLine} />
       <Seg label="Aktionstyp" value={action} options={["Alle", "Vertrieb", "Bindung", "Nur Service"]} onChange={setAction} />
       <Seg label="Mahnung / Risiko" value={risk} options={["Alle", "Ohne Risiko", "Mahnung / Beschwerde"]} onChange={setRisk} />
@@ -78,24 +78,24 @@ export function MarketingTab({ onOpenCustomer }: { onOpenCustomer: (id: string) 
     </div>
     <section className="min-w-0">
       <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-semibold">Kampagnenmatrix</h3><span className="text-xs text-muted-foreground">{rows.length} von {customers.length} Kunden</span></div>
-      <div className="overflow-x-auto border-y bg-card"><table className="w-full text-sm"><thead className="bg-secondary text-left text-[11px] uppercase text-muted-foreground"><tr>{["Kunde", "Wohnort", "Segment", "Empfohlene Aktion", "Kanal", "Tonalität", "ΔCLV", "Status"].map(h => <th key={h} className="whitespace-nowrap px-4 py-4 font-semibold">{h}</th>)}</tr></thead><tbody>
+      <div className="bento overflow-x-auto p-0"><table className="w-full text-sm"><thead className="bg-secondary text-left text-[11px] uppercase text-muted-foreground"><tr>{["Kunde", "Wohnort", "Segment", "Empfohlene Aktion", "Kanal", "Tonalität", "ΔCLV", "Status"].map(h => <th key={h} className="whitespace-nowrap px-4 py-4 font-semibold">{h}</th>)}</tr></thead><tbody>
         {rows.map((c, i) => { const flagged = !!c.current_nba.blocked_by_hard_rule; return <Fragment key={c.customer_id}><tr className={cn("border-t align-top", i % 2 === 1 && "bg-secondary/30", flagged && "border-l-4 border-l-warning bg-warning/10", recentlyUpdated === c.customer_id && "flash-update")}>
           <td className="px-4 py-4"><Button variant="link" size="sm" className="h-auto justify-start rounded-md bg-chart-2/10 px-2 py-1 font-mono text-xs text-chart-2" onClick={() => onOpenCustomer(c.customer_id)} aria-label={`${c.customer_id} in Kunden 360° öffnen`}>{c.customer_id}<ExternalLink className="h-3.5 w-3.5" /></Button><div className="mt-2 whitespace-nowrap text-base font-semibold">{c.name}</div></td>
           <td className="px-4 py-4">{c.city}</td><td className="px-4 py-4 text-muted-foreground">{primarySegment(c)}</td>
           <td className="min-w-56 px-4 py-4"><div className="text-base font-semibold">{c.current_nba.product_name}</div><div className="mt-2"><ActionBadge type={c.current_nba.action_type} /></div></td>
           <td className="px-4 py-4"><ChannelBadge channel={c.current_nba.channel} /></td><td className="px-4 py-4"><span className="inline-flex rounded-md bg-secondary px-3 py-1 font-semibold">{c.current_nba.tone}</span></td><td className="whitespace-nowrap px-4 py-4 font-display font-bold text-success">+{eur(c.current_nba.delta_clv_eur)}</td>
-          <td className="min-w-44 px-4 py-4"><div className="flex flex-col items-start gap-2"><ComplianceBadge blocked={c.current_nba.blocked_by_hard_rule} /><CustomerProfilingBadge c={c} /><span className="text-xs text-muted-foreground">{decisions[decisionKey(c)] === "approved" ? "Freigegeben" : decisions[decisionKey(c)] === "rejected" ? "Abgelehnt" : c.current_nba.product_id === "P-NONE-00" ? "Keine Kontaktaufnahme" : "Freigabe erforderlich"}</span></div></td>
+          <td className="min-w-44 px-4 py-4"><div className="flex flex-col items-start gap-2"><ComplianceBadge blocked={c.current_nba.blocked_by_hard_rule} /><CustomerProfilingBadge c={c} /><StatusBadge status={effectiveStatus(c, decisions)} /></div></td>
         </tr>{flagged && <tr className="border-l-4 border-l-warning bg-warning/10"><td colSpan={8} className="px-4 pb-4 text-xs font-medium text-warning-foreground"><ShieldAlert className="mr-1 inline h-3.5 w-3.5" />{c.current_nba.blocked_by_hard_rule} · Sichere Alternative erzwungen</td></tr>}</Fragment>; })}
         {!rows.length && <tr><td colSpan={8} className="py-10 text-center text-muted-foreground">Keine Kunden entsprechen diesen Filtern.</td></tr>}
       </tbody></table></div>
     </section>
-    <section className="border-t pt-6">
+    <section className="bento">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4"><div><div className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Layers className="h-4 w-4" />Kampagnensteuerung</div><h3 className="mt-1 text-lg font-semibold">Menschliche Freigabe</h3></div><label className="flex items-center gap-3 text-sm"><span>Kontaktschutz · max. 1 Kontakt / 30 Tage</span><Switch checked={fatigue} onCheckedChange={setFatigue} aria-label="Kontaktschutz" /></label></div>
       <div className="mb-4 border-l-4 border-success bg-success/10 px-4 py-4 text-sm font-semibold" aria-live="polite">Ausgewählte Aktionen: {summary.count} | Erwarteter Gesamtgewinn (ΔCLV): <span className="text-success">+{eur(summary.profit)}</span> | Freigabe-Bereit: {summary.channels} Kanäle</div>
       <label className="mb-3 flex w-fit cursor-pointer items-center gap-3 text-sm font-semibold"><Checkbox checked={allChecked ? true : summary.count ? "indeterminate" : false} disabled={!pending.length} onCheckedChange={checked => setSelected(checked ? pending.map(decisionKey) : [])} />Alle auswählen</label>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{pending.map(c => { const key = decisionKey(c); return <label key={key} className="flex cursor-pointer items-start gap-3 rounded-lg border bg-card p-4"><Checkbox className="mt-1" aria-label={`${c.name} auswählen`} checked={selected.includes(key)} onCheckedChange={checked => setSelected(prev => checked ? [...prev, key] : prev.filter(k => k !== key))} /><div className="min-w-0 flex-1"><div className="font-semibold">{c.name}</div><div className="text-xs text-muted-foreground">{c.customer_id}</div><div className="my-2 text-sm">{c.current_nba.product_name}</div><div className="flex flex-wrap items-center gap-2"><ChannelBadge channel={c.current_nba.channel} /><span className="whitespace-nowrap rounded-md bg-success/10 px-2 py-1 text-xs font-bold text-success">+{eur(c.current_nba.delta_clv_eur)} ΔCLV</span></div><CustomerProfilingBadge c={c} /></div></label>; })}</div>
-      {!pending.length && <p className="py-6 text-muted-foreground">Keine ausstehenden Entscheidungen.</p>}
-      <div className="mt-5 flex flex-wrap gap-3"><Button disabled={!summary.count} className="h-auto min-h-9 whitespace-normal bg-gradient-amber py-2 font-semibold text-accent-foreground" onClick={() => resolve("approved")}><Send className="h-4 w-4" />Ausgewählte freigeben & pushen</Button><Button variant="outline" disabled={!summary.count} className="h-auto min-h-9 whitespace-normal py-2" onClick={() => resolve("rejected")}><X className="h-4 w-4" />Ausgewählte ablehnen</Button></div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{pending.map(c => { const key = decisionKey(c); return <label key={key} className="flex cursor-pointer items-start gap-3 rounded-2xl bg-secondary/60 p-4 ring-1 ring-border transition hover:ring-accent/50"><Checkbox className="mt-1" aria-label={`${c.name} auswählen`} checked={selected.includes(key)} onCheckedChange={checked => setSelected(prev => checked ? [...prev, key] : prev.filter(k => k !== key))} /><div className="min-w-0 flex-1"><div className="font-semibold">{c.name}</div><div className="text-xs text-muted-foreground">{c.customer_id}</div><div className="my-2 text-sm">{c.current_nba.product_name}</div><div className="flex flex-wrap items-center gap-2"><ChannelBadge channel={c.current_nba.channel} /><span className="whitespace-nowrap rounded-md bg-success/10 px-2 py-1 text-xs font-bold text-success">+{eur(c.current_nba.delta_clv_eur)} ΔCLV</span></div><CustomerProfilingBadge c={c} /></div></label>; })}</div>
+      {!pending.length && <p className="py-6 text-muted-foreground">Keine ausstehenden Entscheidungen – freigegebene und gesperrte Kunden benötigen keine Freigabe.</p>}
+      <div className="mt-5 flex flex-wrap gap-3"><Button disabled={!summary.count} variant="gold" className="h-auto min-h-9 whitespace-normal py-2" onClick={() => resolve("approved")}><Send className="h-4 w-4" />Ausgewählte freigeben & pushen</Button><Button variant="outline" disabled={!summary.count} className="h-auto min-h-9 whitespace-normal py-2" onClick={() => resolve("rejected")}><X className="h-4 w-4" />Ausgewählte ablehnen</Button></div>
     </section>
   </div>;
 }

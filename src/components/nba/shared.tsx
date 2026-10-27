@@ -1,4 +1,4 @@
-import { Mail, MonitorSmartphone, Phone, BellRing, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Mail, MonitorSmartphone, Phone, BellRing, Ban, ShieldAlert, ShieldCheck } from "lucide-react";
 import type { CustomerNBA } from "@/data/mockData";
 import { profilingState, type PoolCustomer, type ProfilingState } from "@/lib/pitch";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ export const channelMeta: Record<Nba["channel"], { label: string; icon: typeof M
   portal_popup: { label: "Portal Pop-up", icon: MonitorSmartphone },
   agent_phone: { label: "Service-Anruf", icon: Phone },
   app_push: { label: "App Push", icon: BellRing },
+  none: { label: "—", icon: Ban },
 };
 
 export const actionMeta: Record<Nba["action_type"], { label: string; cls: string }> = {
@@ -22,11 +23,12 @@ export const actionMeta: Record<Nba["action_type"], { label: string; cls: string
   service: { label: "Nur Service", cls: "bg-destructive/10 text-destructive border-destructive/30" },
 };
 
-export function ChannelBadge({ channel }: { channel: Nba["channel"] }) {
+export function ChannelBadge({ channel, onDark }: { channel: Nba["channel"]; onDark?: boolean }) {
   const m = channelMeta[channel];
   const Icon = m.icon;
+  if (channel === "none") return <span className={cn("px-3 py-1 text-xs font-medium", onDark ? "text-navy-muted" : "text-muted-foreground")}>—</span>;
   return (
-    <span className={cn("inline-flex whitespace-nowrap items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium", channel === "app_push" ? "bg-push/10 text-push border-push/30" : "bg-secondary")}>
+    <span className={cn("inline-flex whitespace-nowrap items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium", onDark ? "glass-pill" : channel === "app_push" ? "border bg-push/10 text-push border-push/30" : "border bg-secondary")}>
       <Icon className="h-3.5 w-3.5" /> {m.label}
     </span>
   );
@@ -77,6 +79,11 @@ export function CustomerProfilingBadge({ c, onDark }: { c: PoolCustomer; onDark?
   const state = profilingState(c);
   if (state === "granted") return null;
   return <ProfilingBadge state={state} onDark={onDark} />;
+}
+
+export function StatusBadge({ status }: { status: string }) {
+  const cls = status === "Freigegeben" ? "bg-success/15 text-success" : status.startsWith("Gesperrt") || status === "Abgelehnt" ? "bg-destructive/10 text-destructive" : "bg-accent/20 text-warning-foreground";
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors duration-500", cls)}>{status}</span>;
 }
 
 export function primarySegment(c: CustomerNBA) {

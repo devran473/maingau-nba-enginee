@@ -42,7 +42,7 @@ function Shell() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 bg-gradient-navy text-navy-foreground shadow-card">
+      <header className="glass-header sticky top-0 z-50 text-navy-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-4">
           <div className="leading-tight">
             <div className="font-display text-lg font-bold tracking-tight text-navy-foreground">
@@ -51,7 +51,7 @@ function Shell() {
             <div className="mt-1 text-xs text-navy-muted">Strom · Gas · Mobilfunk · Internet · Autostrom · Smart Living</div>
           </div>
           <div className="flex items-center gap-4">
-            <Button size="sm" onClick={sample} className="bg-gradient-amber font-semibold text-accent-foreground hover:opacity-90">
+            <Button variant="gold" onClick={sample}>
               <Dices className="h-4 w-4" /> 5 zufällige Kunden auswählen
             </Button>
             <span className="flex items-center gap-2 text-xs text-navy-muted">
