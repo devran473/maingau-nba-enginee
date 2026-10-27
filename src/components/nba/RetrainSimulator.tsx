@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function RetrainSimulator() {
-  const { model, retrain, approvePolicy } = useNba();
+  const { model, hypotheses, retrain, approvePolicy } = useNba();
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(-1);
 
@@ -36,7 +36,7 @@ export function RetrainSimulator() {
   };
 
   return (
-    <div className="rounded-xl border bg-card shadow-card">
+    <div className="spatial-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-accent">Geschlossener Lernkreislauf</div>
@@ -50,7 +50,7 @@ export function RetrainSimulator() {
           <Button
             onClick={run}
             disabled={running}
-            className="h-auto min-h-9 whitespace-normal bg-gradient-amber py-2 font-semibold text-accent-foreground hover:opacity-90"
+            variant="gold" className="h-auto min-h-9 whitespace-normal py-2"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
             {running ? "Simulation läuft…" : "50 Kundenrückmeldungen simulieren"}
@@ -94,23 +94,23 @@ export function RetrainSimulator() {
         {model.retrained && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border bg-secondary/60 p-3">
+              <div className="metric-well p-3">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Gesamter ΔCLV</div>
                 <div className="font-display text-xl font-bold text-success">
                   {eur(model.clv)}
                 </div>
                 <div className="text-[11px] text-muted-foreground">von {eur(148250)} · +{eur(RETRAINED_CLV - 148250)}</div>
               </div>
-              <div className="rounded-lg border bg-secondary/60 p-3">
+              <div className="metric-well p-3">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Konvertierungsrate</div>
                 <div className="font-display text-xl font-bold text-success">{model.conversion.toLocaleString("de-DE", { minimumFractionDigits: 1 })}%</div>
                 <div className="text-[11px] text-muted-foreground">+{CONVERSION_GAIN_PP.toLocaleString("de-DE", { minimumFractionDigits: 1 })} pp ggü. Kontrollgruppe</div>
               </div>
-              <div className="rounded-lg border bg-secondary/60 p-3">
+              <div className="metric-well p-3">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Hypothese H-105</div>
-                <div className="font-display text-xl font-bold">{model.h105.status}</div>
+                <div className="font-display text-xl font-bold">{hypotheses.h105.status}</div>
                 <div className="text-[11px] text-muted-foreground">
-                  {model.h105.sample} Kunden · {model.h105.significance}% Signifikanz
+                  {hypotheses.h105.sample} Kunden · {hypotheses.h105.significance}% Signifikanz
                 </div>
               </div>
             </div>
@@ -128,7 +128,7 @@ export function RetrainSimulator() {
                     Menschliche Freigabe: Neu trainierte Regeln werden erst nach Marketingfreigabe aktiv.
                   </span>
                 </div>
-                <Button onClick={approve} className="h-auto min-h-9 whitespace-normal bg-gradient-amber py-2 font-semibold text-accent-foreground hover:opacity-90">
+                <Button onClick={approve} variant="gold" className="h-auto min-h-9 whitespace-normal py-2">
                   <ShieldCheck className="h-4 w-4" /> Marketingfreigabe: Neue Regeln für nächsten Versand anwenden
                 </Button>
               </div>

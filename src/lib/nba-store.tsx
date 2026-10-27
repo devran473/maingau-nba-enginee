@@ -8,6 +8,7 @@ import {
   applyRetrain,
   BASE_MODEL,
   enforceProfiling,
+  explorationHypotheses,
   pickSample,
   type ModelState,
   type PoolCustomer,
@@ -28,6 +29,7 @@ interface Store {
   sampleRandom: () => PoolCustomer[];
   sampleIds: string[] | null;
   exploration: number;
+  hypotheses: ReturnType<typeof explorationHypotheses>;
   setExploration: (value: number) => void;
   decisions: Record<string, DecisionStatus>;
   resolveDecisions: (keys: string[], status: DecisionStatus) => void;
@@ -126,7 +128,7 @@ export function NbaProvider({ children }: { children: ReactNode }) {
         logFeedback,
         sampleRandom,
         sampleIds,
-        exploration, setExploration, decisions, resolveDecisions,
+        exploration, hypotheses: explorationHypotheses(exploration), setExploration, decisions, resolveDecisions,
         model,
         retrain,
         approvePolicy,

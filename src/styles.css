@@ -104,6 +104,22 @@
   --gradient-amber: linear-gradient(135deg, oklch(0.769 0.165 70.08), oklch(0.83 0.16 85));
   --shadow-card: 0 1px 2px oklch(0.2 0.04 265 / 6%), 0 8px 24px -12px oklch(0.2 0.04 265 / 18%);
   --shadow-glow: 0 0 0 1px oklch(0.769 0.165 70.08 / 40%), 0 12px 40px -12px oklch(0.769 0.165 70.08 / 45%);
+  --surface-raised: linear-gradient(to bottom, var(--card) 0%, var(--card) 55%, oklch(0.978 0.005 255) 100%);
+  --surface-highlight: oklch(1 0 0);
+  --surface-ledge: oklch(0.82 0.018 255 / 70%);
+  --surface-well: oklch(0.95 0.008 255 / 90%);
+  --surface-track: oklch(0.9 0.012 255);
+  --shadow-spatial: 0 12px 30px -8px oklch(0.21 0.04 265 / 12%), 0 4px 10px -2px oklch(0.21 0.04 265 / 6%);
+  --shadow-spatial-hover: 0 20px 40px -12px oklch(0.21 0.04 265 / 18%);
+  --shadow-recessed: inset 0 2px 5px oklch(0.21 0.04 265 / 8%);
+  --shadow-track: inset 0 2px 4px oklch(0 0 0 / 15%);
+  --liquid-gold: linear-gradient(to right, oklch(0.72 0.17 65), var(--accent), oklch(0.89 0.16 95));
+  --liquid-blue: linear-gradient(to right, oklch(0.43 0.2 260), oklch(0.61 0.2 255), oklch(0.79 0.14 215));
+  --shadow-liquid-gold: 0 2px 6px oklch(0.77 0.17 70 / 40%);
+  --shadow-liquid-blue: 0 2px 6px oklch(0.55 0.2 255 / 40%);
+  --gold-ledge: oklch(0.5 0.13 60);
+  --shadow-gold-button: 0 6px 16px oklch(0.77 0.17 70 / 35%);
+  --shadow-dark-spatial: inset 0 1px 0 oklch(1 0 0 / 18%), 0 20px 35px -12px oklch(0 0 0 / 30%);
 }
 
 @layer base {
@@ -121,12 +137,51 @@
 }
 
 @utility bento {
-  background-color: var(--color-card);
+  background-image: var(--surface-raised);
   border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  border-top-color: var(--surface-highlight);
+  border-bottom: 4px solid var(--surface-ledge);
   padding: 1.5rem;
-  box-shadow: 0 4px 24px oklch(0 0 0 / 4%), 0 0 0 1px oklch(0 0 0 / 4%);
-  transition: box-shadow 300ms ease;
-  &:hover { box-shadow: 0 8px 32px oklch(0 0 0 / 7%), 0 0 0 1px oklch(0 0 0 / 4%); }
+  box-shadow: var(--shadow-spatial);
+  transition: box-shadow 300ms ease, transform 300ms ease;
+  @media (hover: hover) { &:hover { transform: translateY(-4px); box-shadow: var(--shadow-spatial-hover); } }
+}
+@utility spatial-card {
+  background-image: var(--surface-raised);
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  border-top-color: var(--surface-highlight);
+  border-bottom: 4px solid var(--surface-ledge);
+  box-shadow: var(--shadow-spatial);
+  transition: box-shadow 300ms ease, transform 300ms ease;
+  @media (hover: hover) { &:hover { transform: translateY(-4px); box-shadow: var(--shadow-spatial-hover); } }
+}
+@utility metric-well {
+  background-color: var(--surface-well);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  border-bottom-color: var(--surface-highlight);
+  box-shadow: var(--shadow-recessed);
+  min-width: 0;
+}
+@utility liquid-track {
+  height: 1rem;
+  border-radius: 9999px;
+  background-color: var(--surface-track);
+  box-shadow: var(--shadow-track);
+  overflow: hidden;
+  padding: 2px;
+}
+@utility liquid-gold {
+  background-image: var(--liquid-gold);
+  box-shadow: var(--shadow-liquid-gold);
+  border-radius: 9999px;
+}
+@utility liquid-blue {
+  background-image: var(--liquid-blue);
+  box-shadow: var(--shadow-liquid-blue);
+  border-radius: 9999px;
 }
 @utility glass-header {
   background-color: color-mix(in oklab, var(--navy) 90%, transparent);
@@ -138,11 +193,14 @@
   background-image: linear-gradient(to bottom, var(--gold-light), var(--accent));
   color: var(--navy-deep);
   font-weight: 600;
-  border-radius: 9999px;
-  box-shadow: 0 2px 10px color-mix(in oklab, var(--accent) 30%, transparent);
+  border-radius: 1rem;
+  border-top: 1px solid var(--gold-light);
+  border-bottom: 4px solid var(--gold-ledge);
+  box-shadow: var(--shadow-gold-button);
+  flex-shrink: 0;
   transition: all 150ms ease;
   &:hover { filter: brightness(1.05); }
-  &:active { transform: scale(0.98); }
+  &:active { transform: translateY(4px); border-bottom-color: transparent; box-shadow: none; }
 }
 @utility segmented {
   display: inline-flex;
@@ -156,7 +214,7 @@
   font-size: 2.25rem;
   line-height: 2.5rem;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   color: var(--foreground);
 }
 @utility micro-label {
@@ -173,19 +231,10 @@
   padding: 2rem;
   color: var(--navy-foreground);
   background-image: linear-gradient(to bottom right, oklch(0.21 0.04 265), var(--navy), oklch(0.13 0.035 272));
-  box-shadow: 0 25px 50px -12px oklch(0 0 0 / 35%), 0 0 0 1px oklch(1 0 0 / 10%);
-  &::before {
-    content: "";
-    position: absolute;
-    top: -6rem;
-    right: -6rem;
-    width: 20rem;
-    height: 20rem;
-    border-radius: 9999px;
-    background-color: color-mix(in oklab, var(--accent) 12%, transparent);
-    filter: blur(64px);
-    pointer-events: none;
-  }
+  border: 1px solid var(--navy-muted);
+  border-top-color: var(--navy-foreground);
+  border-bottom: 4px solid var(--navy-deep);
+  box-shadow: var(--shadow-dark-spatial);
   & > * { position: relative; }
 }
 @utility glass-pill {

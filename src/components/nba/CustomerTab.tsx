@@ -46,11 +46,11 @@ export function CustomerTab() {
         <div className="flex flex-wrap items-center gap-3">
           <span className="micro-label">Kunde</span>
           <Select value={c.customer_id} onValueChange={setSelectedId}>
-            <SelectTrigger className="w-full bg-card sm:w-80"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-auto min-h-10 w-full max-w-full bg-card py-2 sm:w-[34rem] [&_span]:whitespace-normal [&_span]:text-left"><SelectValue /></SelectTrigger>
             <SelectContent>
               {customers.map((x) => (
                 <SelectItem key={x.customer_id} value={x.customer_id}>
-                  {x.customer_id} · {x.name}
+                  {x.customer_id} (Pseudonymisiertes Profil · {x.city})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -63,8 +63,7 @@ export function CustomerTab() {
         <div className={cn("bento", recentlyUpdated === c.customer_id && "flash-update")}>
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <div className="font-mono text-xs text-muted-foreground">{c.customer_id}</div>
-              <h2 className="mt-1 text-2xl font-bold">{c.name}</h2>
+              <h2 className="text-2xl font-bold break-words">{c.customer_id} <span className="text-base font-medium text-muted-foreground">(Pseudonymisiertes Profil · {c.city})</span></h2>
               <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{c.city}</span>
                 <span className="flex items-center gap-1"><CalendarDays className="h-4 w-4" />Kunde seit {new Date(c.customer_since).toLocaleDateString("de-DE")}</span>
