@@ -2,7 +2,6 @@ import { useState } from "react";
 import { RefreshCw, Play, Database, Radio, CheckCircle2, Loader2, ArrowRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useNba, REPLAY_EVENTS } from "@/lib/nba-store";
-import { POOL_BY_ID } from "@/data/pitchPool";
 import type { CustomerNBA, StreamEvent } from "@/data/mockData";
 import { ActionBadge, ChannelBadge, eur } from "./shared";
 import { Button } from "@/components/ui/button";
@@ -53,7 +52,7 @@ export function ReplayTab({ onOpenCustomer }: { onOpenCustomer: (id: string) => 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-gradient-navy p-6 text-navy-foreground shadow-card">
+      <div className="obsidian p-6">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-accent"><Radio className="h-4 w-4" />Deep Dive B</div>
         <h2 className="mt-2 text-2xl font-bold">Echtzeit Event-Replay</h2>
         <p className="mt-2 max-w-3xl text-sm text-navy-muted">
@@ -80,10 +79,9 @@ export function ReplayTab({ onOpenCustomer }: { onOpenCustomer: (id: string) => 
           {REPLAY_EVENTS.map((evt, idx) => {
             const done = processed[evt.event_id];
             const isRunning = running === evt.event_id;
-            const cust = customers.find((c) => c.customer_id === evt.customer_id) ?? POOL_BY_ID.get(evt.customer_id);
             const inSample = customers.some((c) => c.customer_id === evt.customer_id);
             return (
-              <div key={evt.event_id} className={cn("rounded-xl border bg-card p-5 shadow-card transition", isRunning && "shadow-glow")}>
+              <div key={evt.event_id} className={cn("spatial-card p-5", isRunning && "shadow-glow")}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-xl">
                     <div className="flex items-center gap-2 text-xs">
@@ -93,13 +91,13 @@ export function ReplayTab({ onOpenCustomer }: { onOpenCustomer: (id: string) => 
                     <div className="mt-2 font-semibold">
                       {({ gas_meter_deregistered: "Gaszähler abgemeldet", charge_failed_third_time: "Dritter Ladeabbruch", consent_withdrawn: "Einwilligung widerrufen", complaint_created: "Beschwerde eröffnet" })[evt.event_type]} ·{" "}
                       {inSample ? (
-                        <Button variant="link" className="h-auto p-0 font-mono text-chart-2" onClick={() => onOpenCustomer(evt.customer_id)}>
+                        <Button variant="gold" size="sm" className="h-auto min-h-9 font-mono" onClick={() => onOpenCustomer(evt.customer_id)}>
                           {evt.customer_id}
                         </Button>
                       ) : (
                         <span className="font-mono text-chart-2">{evt.customer_id}</span>
                       )}{" "}
-                      <span className="font-normal text-muted-foreground">({cust?.name})</span>
+                      
                       {!inSample && (
                         <span className="mt-1 block text-xs font-normal text-warning-foreground">
                           Nicht in der aktuellen Stichprobe — Replay nutzt den Ausgangszustand des Testpools.
@@ -112,8 +110,7 @@ export function ReplayTab({ onOpenCustomer }: { onOpenCustomer: (id: string) => 
                   <Button
                     disabled={!!running || !!done}
                     onClick={() => play(evt)}
-                    className={done ? "" : "bg-gradient-amber font-semibold text-accent-foreground hover:opacity-90"}
-                    variant={done ? "secondary" : "default"}
+                    variant={done ? "secondary" : "gold"}
                   >
                     {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : done ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     {isRunning ? "Verarbeitung" : done ? "Angewendet" : "Ereignis abspielen"}
@@ -138,7 +135,7 @@ export function ReplayTab({ onOpenCustomer }: { onOpenCustomer: (id: string) => 
           })}
         </div>
 
-        <div className="h-fit rounded-xl border bg-navy p-4 font-mono text-xs text-navy-foreground shadow-card lg:sticky lg:top-24">
+        <div className="obsidian h-fit p-4 font-mono text-xs lg:sticky lg:top-24">
           <div className="mb-3 flex items-center gap-2 text-navy-muted">
             <RefreshCw className={cn("h-3.5 w-3.5", running && "animate-spin text-accent")} /> Echtzeit-Verarbeitungsprotokoll
           </div>
