@@ -20,7 +20,7 @@ export interface CustomerNBA {
     product_id: string;
     product_name: string;
     action_type: 'sales' | 'retention' | 'service' | 'upsell';
-    channel: 'email' | 'portal_popup' | 'agent_phone' | 'app_push';
+    channel: 'email' | 'portal_popup' | 'agent_phone' | 'app_push' | 'none';
     tone: 'Du' | 'Sie';
     tone_confidence: number;
     delta_clv_eur: number;

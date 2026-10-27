@@ -8,6 +8,38 @@ export interface PoolCustomer extends CustomerNBA {
   profiling_analytics?: ProfilingState;
   /** Which non-personalized fallback the compliance guard applies when profiling is missing. */
   fallback_kind?: "notice" | "no_action";
+  /** Workflow status, derived by normalizeCustomer. */
+  status?: CustomerStatus;
+  /** Display label for the salutation, derived by normalizeCustomer. */
+  tone_label?: string;
+}
+
+export type CustomerStatus = "Freigabe erforderlich" | "Freigegeben" | "Gesperrt (Kontaktschutz)" | "Gesperrt (Kein Profiling)";
+export const TONE_FALLBACK_LABEL = "Sie (Standard-Fallback · kein NLP-Profiling)";
+
+/**
+ * Single source of truth that makes contradictory customer states impossible:
+ * no profiling → Sie fallback, no NLP score, ΔCLV 0; no action → no channel; blocked → never queued.
+ */
+export function normalizeCustomer(c: PoolCustomer): PoolCustomer {
+  const n = c.current_nba;
+  const blocked = isProfilingBlocked(c);
+  const noAction = n.product_id === "P-NONE-00";
+  const status: CustomerStatus = noAction ? "Gesperrt (Kontaktschutz)" : blocked ? "Gesperrt (Kein Profiling)" : c.status ?? "Freigabe erforderlich";
+  const tone = blocked ? "Sie" : n.tone;
+  const tone_label = blocked ? TONE_FALLBACK_LABEL : `${n.tone} (${n.tone_confidence}% NLP-Konfidenz)`;
+  const channel = noAction ? "none" : n.channel;
+  const delta = blocked ? 0 : n.delta_clv_eur;
+  if (c.status === status && c.tone_label === tone_label && n.tone === tone && n.channel === channel && n.delta_clv_eur === delta) return c;
+  return { ...c, status, tone_label, current_nba: { ...n, tone, channel, delta_clv_eur: delta } };
+}
+
+/** Effective status including human decisions taken in this session. */
+export function effectiveStatus(c: PoolCustomer, resolved: Record<string, DecisionStatus>): string {
+  const d = resolved[decisionKey(c)];
+  if (d === "approved") return "Freigegeben";
+  if (d === "rejected") return "Abgelehnt";
+  return normalizeCustomer(c).status ?? "Freigabe erforderlich";
 }
 
 export const PROFILING_FALLBACK_REASON =
@@ -53,17 +85,17 @@ export function enforceProfiling(c: PoolCustomer): PoolCustomer {
   const reason = c.current_nba.reason.replaceAll("Churn-Prävention", "Abwanderungsprävention").replaceAll("Retention", "Kundenbindung").replaceAll("Churn", "Abwanderung").replaceAll("Cross-Sell", "Zusatzangebot").replaceAll("E-Mail-Consent", "E-Mail-Einwilligung");
   const blocked = c.current_nba.blocked_by_hard_rule?.replaceAll("Sales geblockt", "Vertrieb gesperrt").replaceAll("Dunning Level", "Mahnstufe");
   if (score !== c.current_nba.tone_confidence || reason !== c.current_nba.reason || blocked !== c.current_nba.blocked_by_hard_rule) c = { ...c, current_nba: { ...c.current_nba, tone_confidence: score, reason, ...(blocked ? { blocked_by_hard_rule: blocked } : {}) } };
-  if (!isProfilingBlocked(c)) return c;
+  if (!isProfilingBlocked(c)) return normalizeCustomer(c);
   const base = FALLBACKS[c.fallback_kind ?? "notice"];
-  return {
+  return normalizeCustomer({
     ...c,
     current_nba: {
       ...base,
       channel: c.consents.portal_app ? "portal_popup" : "email",
-      tone: c.current_nba.tone,
+      tone: "Sie",
       tone_confidence: c.current_nba.tone_confidence,
     },
-  };
+  });
 }
 
 /* ---------------------------------- hypotheses --------------------------------- */
@@ -163,15 +195,19 @@ export function shuffle<T>(arr: readonly T[], rng: () => number): T[] {
  * always included so the compliance fallback is demonstrable in every sample.
  */
 export function pickSample(pool: readonly PoolCustomer[], size = 5, rng: () => number = Math.random): PoolCustomer[] {
-  const restricted = pool.filter(isProfilingBlocked);
-  const rest = pool.filter((c) => !isProfilingBlocked(c));
+  const norm = pool.map(normalizeCustomer);
+  const restricted = norm.filter(isProfilingBlocked);
+  const profitablePending = norm.filter((c) => c.status === "Freigabe erforderlich" && c.current_nba.delta_clv_eur > 0);
+  const approved = norm.filter((c) => c.status === "Freigegeben");
   const out: PoolCustomer[] = [];
-  const push = (c: PoolCustomer) => {
-    if (out.length < size && !out.includes(c)) out.push(c);
+  const push = (c: PoolCustomer | undefined) => {
+    if (c && out.length < size && !out.includes(c)) out.push(c);
   };
-  for (const c of shuffle(restricted, rng)) push(c);
-  for (const c of shuffle(rest, rng)) push(c);
-  return out;
+  push(shuffle(restricted, rng)[0]);
+  for (const c of shuffle(profitablePending, rng).slice(0, 2)) push(c);
+  push(shuffle(approved, rng)[0]);
+  for (const c of shuffle(norm, rng)) push(c);
+  return shuffle(out, rng);
 }
 
 /** Prototype anchors; retain the retraining gain while applying exploration cost. */
@@ -192,7 +228,7 @@ export function decisionKey(c: PoolCustomer) {
   return [c.customer_id, n.product_id, n.channel, n.delta_clv_eur, n.reason].join("|");
 }
 export function pendingDecisions(customers: PoolCustomer[], resolved: Record<string, DecisionStatus>) {
-  return customers.map(enforceProfiling).filter(c => c.current_nba.product_id !== "P-NONE-00" && !resolved[decisionKey(c)]);
+  return customers.map(enforceProfiling).filter(c => c.status === "Freigabe erforderlich" && !resolved[decisionKey(c)]);
 }
 export function selectionSummary(customers: PoolCustomer[], keys: string[]) {
   const selected = customers.filter(c => keys.includes(decisionKey(c)));

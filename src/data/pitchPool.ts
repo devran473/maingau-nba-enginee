@@ -221,6 +221,7 @@ const EXTRA: PoolCustomer[] = [
 /** Full pool, already passed through the profiling compliance guard. */
 export const POOL: PoolCustomer[] = [...BASE, ...EXTRA].map(c => enforceProfiling({
   ...c,
+  ...(c.name === "Laura Schmidt" ? { status: "Freigegeben" as const } : {}),
   churn_drivers: c.churn_drivers.map(d => d.replace("Multi-Product", "Mehrproduktkunde")),
   current_nba: {
     ...c.current_nba,
